@@ -41,9 +41,10 @@ class SearchGrpcServiceTest {
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws InterruptedException {
         channel.shutdownNow();
         server.shutdownNow();
+        server.awaitTermination(1, TimeUnit.SECONDS);
     }
 
     @Test
@@ -62,10 +63,5 @@ class SearchGrpcServiceTest {
         assertThat(result.getScore()).isEqualTo(0.87);
         assertThat(result.getAverageRating()).isEqualTo(4.5);
         assertThat(result.getRatingCount()).isEqualTo(200);
-    }
-
-    @AfterEach
-    void awaitTermination() throws InterruptedException {
-        server.awaitTermination(1, TimeUnit.SECONDS);
     }
 }

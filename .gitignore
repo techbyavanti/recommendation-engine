@@ -12,6 +12,7 @@ models/*/
 # Node / React
 web/node_modules/
 web/dist/
+web/coverage/
 
 # Python
 training/__pycache__/

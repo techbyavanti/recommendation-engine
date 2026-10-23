@@ -87,7 +87,7 @@ These results are reported as measured. [docs/EVALUATION.md](docs/EVALUATION.md)
 | Search | Pinecone Local (vector search), in-memory BM25, `bge-small-en-v1.5` embeddings with ONNX Runtime |
 | Machine learning | Python, XGBoost, ONNX |
 | Build and run | Maven, npm, Docker Compose |
-| CI and security | GitHub Actions, Trivy, Semgrep, Gitleaks, Hadolint, Dependabot |
+| CI and security | GitHub Actions, SonarQube, Trivy, Semgrep, Gitleaks, Hadolint, Dependabot |
 
 ## Run it
 

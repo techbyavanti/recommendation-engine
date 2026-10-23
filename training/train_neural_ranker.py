@@ -284,8 +284,8 @@ def pairwise_ranking_accuracy(y_true, y_pred, groups):
     for user_id in set(groups):
         mask = groups == user_id
         true_u, pred_u = y_true[mask], y_pred[mask]
-        pos_idx = np.where(true_u > 0)[0]
-        neg_idx = np.where(true_u == 0)[0]
+        pos_idx = np.nonzero(true_u > 0)[0]
+        neg_idx = np.nonzero(true_u == 0)[0]
         for i in pos_idx:
             for j in neg_idx:
                 total += 1
@@ -408,7 +408,9 @@ def run_one_seed(rows, products, aggregates, seed, train_pointwise_too=False):
     X, y, groups = build_dataset(rows, products, aggregates, rng)
 
     unique_users = sorted(set(groups))
-    rng.shuffle(unique_users)
+    # A seeded generator is necessary here: the split must be reproducible
+    # for each seed. It has no security use.
+    rng.shuffle(unique_users)  # NOSONAR
     split = int(len(unique_users) * 0.8)
     train_users, holdout_users = set(unique_users[:split]), set(unique_users[split:])
     train_mask = np.array([g in train_users for g in groups])
