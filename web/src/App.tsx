@@ -20,7 +20,9 @@ export default function App() {
   });
 
   function search(searchQuery: string, searchStrategy: RecommenderStrategy) {
-    runSearch({ variables: { query: searchQuery, topK: TOP_K, strategy: searchStrategy } });
+    // The hook's `error` state shows a failed request. The catch only stops
+    // the same rejection from also being reported as unhandled.
+    runSearch({ variables: { query: searchQuery, topK: TOP_K, strategy: searchStrategy } }).catch(() => undefined);
   }
 
   function handleSearch(nextQuery: string) {

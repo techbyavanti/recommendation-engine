@@ -12,8 +12,15 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # Secrets cannot appear in `if:` conditions, so the SonarQube steps
+      # check this variable. It is empty on forks and until the secret is set.
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # SonarQube uses the full history to find new code and its authors.
+          fetch-depth: 0
 
       - name: Set up JDK 26
         uses: actions/setup-java@v6
@@ -33,8 +40,9 @@ jobs:
       # this platform is genuinely native (unlike macOS, where the
       # "osx-aarch_64" classifier ships an x86_64 binary requiring Rosetta 2
       # — a dev-machine-only concern, not relevant here).
+      # `verify` also writes each module's JaCoCo coverage report.
       - name: Run Java unit tests
-        run: mvn -B test
+        run: mvn -B verify
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -49,24 +57,42 @@ jobs:
 
       - name: Run web unit tests
         working-directory: web
-        run: npm test -- --run
+        run: npm test -- --coverage
 
       - name: Build web
         working-directory: web
         run: npm run build
 
-  # --- Software Composition Analysis: known CVEs in resolved dependencies
-  #     (Maven and npm both — trivy fs scans package-lock.json too) ---
+      # --- Code quality: SonarQube Cloud analyzes Java, TypeScript, Python,
+      #     shell and Dockerfiles with the coverage from the steps above.
+      #     The quality gate fails this job on new bugs, vulnerabilities,
+      #     code smells, duplication, or low coverage on new code.
+      #     Configuration: sonar-project.properties. ---
+      - name: Copy Java libraries for SonarQube
+        if: env.SONAR_TOKEN != ''
+        run: mvn -B -q dependency:copy-dependencies -DincludeScope=test
+
+      - name: SonarQube analysis
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v8
+        with:
+          args: >
+            -Dsonar.qualitygate.wait=true
+
+  # --- Trivy filesystem scan: known CVEs in resolved dependencies (Maven
+  #     and npm both — trivy fs scans package-lock.json too), Dockerfile
+  #     misconfigurations (root user, missing HEALTHCHECK, etc.), and
+  #     committed secrets ---
   cve-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: Scan dependencies for known CVEs
+      - name: Scan dependencies, Dockerfiles, and secrets
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
-          scanners: vuln
+          scanners: vuln,misconfig,secret
           scan-ref: .
           severity: CRITICAL,HIGH,MEDIUM
           exit-code: '1'
@@ -77,7 +103,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
-          scanners: vuln
+          scanners: vuln,misconfig,secret
           scan-ref: .
           severity: CRITICAL,HIGH,MEDIUM
           format: sarif
@@ -174,6 +200,20 @@ jobs:
           image-ref: ${{ matrix.service }}:${{ github.sha }}
           scanners: vuln
           severity: CRITICAL,HIGH
+          exit-code: '1'
+          format: table
+
+      # Medium findings fail the build only when a fixed package exists.
+      # The Dockerfiles upgrade all OS packages, so a failure here means
+      # that the fix is in a dependency or a newer base image.
+      - name: Scan image for fixable medium CVEs
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ matrix.service }}:${{ github.sha }}
+          scanners: vuln
+          severity: MEDIUM
+          ignore-unfixed: true
           exit-code: '1'
           format: table
 

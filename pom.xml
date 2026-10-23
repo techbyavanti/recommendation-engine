@@ -61,6 +61,8 @@
     <jackson3.version>3.1.7</jackson3.version>
     <picocli.version>4.7.7</picocli.version>
     <slf4j.version>2.0.20</slf4j.version>
+    <!-- 0.8.15 is the first JaCoCo release that reads Java 26 class files. -->
+    <jacoco.version>0.8.15</jacoco.version>
   </properties>
 
   <dependencyManagement>
@@ -257,6 +259,11 @@
           <version>3.6.2</version>
         </plugin>
         <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>${jacoco.version}</version>
+        </plugin>
+        <plugin>
           <groupId>org.xolstice.maven.plugins</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
           <version>${protobuf-plugin.version}</version>
@@ -277,5 +284,28 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <!-- Line and branch coverage for SonarQube. Each module writes
+           target/site/jacoco/jacoco.xml during `mvn verify`. -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 </project>
