@@ -35,7 +35,7 @@ public final class MetricsCalculator {
         int limit = Math.min(k, rankedProductIds.size());
         for (int i = 0; i < limit; i++) {
             int relevance = grades.getOrDefault(rankedProductIds.get(i), 0);
-            dcg += (Math.pow(2, relevance) - 1) / (Math.log(i + 2) / Math.log(2));
+            dcg += (Math.pow(2, relevance) - 1) / (Math.log(i + 2.0) / Math.log(2));
         }
         return dcg;
     }

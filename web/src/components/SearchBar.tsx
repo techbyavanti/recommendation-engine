@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 interface SearchBarProps {
   initialQuery: string;
@@ -7,10 +7,10 @@ interface SearchBarProps {
   isLoading: boolean;
 }
 
-export function SearchBar({ initialQuery, onSearch, isLoading }: SearchBarProps) {
+export function SearchBar({ initialQuery, onSearch, isLoading }: Readonly<SearchBarProps>) {
   const [value, setValue] = useState(initialQuery);
 
-  function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = value.trim();
     if (trimmed.length > 0) {

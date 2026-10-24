@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.LongBuffer;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -101,11 +101,7 @@ public final class EmbeddingService implements AutoCloseable {
                     .orElseThrow(() -> new IllegalStateException("Model produced no '" + OUTPUT_NAME + "' output"))
                     .getValue();
 
-            List<float[]> embeddings = new ArrayList<>(batchSize);
-            for (float[][] tokenVectors : lastHiddenState) {
-                embeddings.add(normalize(tokenVectors[0]));
-            }
-            return embeddings;
+            return Arrays.stream(lastHiddenState).map(tokenVectors -> normalize(tokenVectors[0])).toList();
         } catch (OrtException e) {
             throw new UncheckedIOException(new IOException("ONNX inference failed", e));
         }

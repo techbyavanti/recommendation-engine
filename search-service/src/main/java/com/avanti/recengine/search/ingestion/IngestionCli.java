@@ -7,6 +7,8 @@ import com.avanti.recengine.support.pinecone.ProductVector;
 import com.avanti.recengine.support.wands.EmbeddingTextBuilder;
 import com.avanti.recengine.support.wands.WandsProductCsvLoader;
 import com.avanti.recengine.support.wands.WandsProductRow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -27,6 +29,8 @@ import java.util.concurrent.Callable;
 @Command(name = "ingest", mixinStandardHelpOptions = true,
         description = "Embeds WANDS products and upserts them into Pinecone.")
 public class IngestionCli implements Callable<Integer> {
+
+    private static final Logger log = LoggerFactory.getLogger(IngestionCli.class);
 
     @Option(names = "--data-dir", description = "Directory containing product.csv (default: ../data)")
     private Path dataDir = Path.of("../data");
@@ -51,11 +55,11 @@ public class IngestionCli implements Callable<Integer> {
         Path embeddingDir = modelsDir.resolve("bge-small-en-v1.5");
         Path productCsv = dataDir.resolve("product.csv");
 
-        System.out.println("Loading products from " + productCsv);
+        log.info("Loading products from {}", productCsv);
         List<WandsProductRow> rows = WandsProductCsvLoader.load(productCsv);
-        System.out.println("Loaded " + rows.size() + " products");
+        log.info("Loaded {} products", rows.size());
 
-        System.out.println("Ensuring Pinecone index '" + indexName + "' exists at " + pineconeHost);
+        log.info("Ensuring Pinecone index '{}' exists at {}", indexName, pineconeHost);
         PineconeVectorStore.ensureServerlessIndex(pineconeHost, apiKey, tlsEnabled, indexName, EmbeddingService.DIMENSIONS);
 
         try (EmbeddingService embeddingService = new EmbeddingService(embeddingDir);
@@ -78,12 +82,12 @@ public class IngestionCli implements Callable<Integer> {
                 store.upsertBatch(vectors);
 
                 if (b % 10 == 0 || b == batches - 1) {
-                    System.out.printf("Ingested batch %d/%d (%d/%d products)%n", b + 1, batches, end, total);
+                    log.info("Ingested batch {}/{} ({}/{} products)", b + 1, batches, end, total);
                 }
             }
         }
 
-        System.out.println("Done.");
+        log.info("Done.");
         return 0;
     }
 

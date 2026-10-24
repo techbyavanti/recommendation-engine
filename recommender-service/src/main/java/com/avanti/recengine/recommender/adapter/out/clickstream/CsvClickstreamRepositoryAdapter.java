@@ -23,7 +23,7 @@ public final class CsvClickstreamRepositoryAdapter extends ClickstreamAggregates
     public CsvClickstreamRepositoryAdapter(Path clickstreamCsv, Path productCsv) {
         super(WandsCatalog.load(productCsv));
         groupBySession(ClickstreamCsvReader.read(clickstreamCsv)).forEach(this::applySession);
-        log.info("Loaded clickstream aggregates: {}", aggregateSummary());
+        log.atInfo().addArgument(this::aggregateSummary).log("Loaded clickstream aggregates: {}");
     }
 
     private static Collection<List<ClickstreamEvent>> groupBySession(List<ClickstreamEvent> events) {

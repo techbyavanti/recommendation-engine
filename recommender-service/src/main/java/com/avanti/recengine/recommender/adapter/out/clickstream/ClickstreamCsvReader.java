@@ -33,8 +33,8 @@ public final class ClickstreamCsvReader {
         List<ClickstreamEvent> events = new ArrayList<>();
         try (Reader reader = Files.newBufferedReader(clickstreamCsv, StandardCharsets.UTF_8);
              CSVParser parser = FORMAT.parse(reader)) {
-            for (CSVRecord record : parser) {
-                events.add(toEvent(record));
+            for (CSVRecord row : parser) {
+                events.add(toEvent(row));
             }
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to load " + clickstreamCsv, e);
@@ -42,15 +42,15 @@ public final class ClickstreamCsvReader {
         return events;
     }
 
-    private static ClickstreamEvent toEvent(CSVRecord record) {
+    private static ClickstreamEvent toEvent(CSVRecord row) {
         return new ClickstreamEvent(
-                record.get("session_id"),
-                record.get("user_id"),
-                OffsetDateTime.parse(record.get("timestamp")),
-                record.get("query_id"),
-                Integer.parseInt(record.get("position")),
-                record.get("product_id"),
-                record.get("event_type")
+                row.get("session_id"),
+                row.get("user_id"),
+                OffsetDateTime.parse(row.get("timestamp")),
+                row.get("query_id"),
+                Integer.parseInt(row.get("position")),
+                row.get("product_id"),
+                row.get("event_type")
         );
     }
 }

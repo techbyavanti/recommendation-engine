@@ -13,8 +13,7 @@ class ProductVectorTest {
         ProductVector first = new ProductVector("p1", new float[]{1f, 2f}, Map.of("name", "chair"));
         ProductVector second = new ProductVector("p1", new float[]{1f, 2f}, Map.of("name", "chair"));
 
-        assertThat(first).isEqualTo(second).hasSameHashCodeAs(second);
-        assertThat(first).hasToString(second.toString());
+        assertThat(first).isEqualTo(second).hasSameHashCodeAs(second).hasToString(second.toString());
     }
 
     @Test

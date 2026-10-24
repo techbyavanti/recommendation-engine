@@ -1,6 +1,5 @@
 package com.avanti.recengine.search.domain.lexical;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -23,12 +22,8 @@ final class Tokenizer {
         if (text == null || text.isBlank()) {
             return List.of();
         }
-        List<String> tokens = new ArrayList<>();
-        for (String token : NON_ALPHANUMERIC.split(text.toLowerCase(Locale.ROOT))) {
-            if (!token.isEmpty()) {
-                tokens.add(token);
-            }
-        }
-        return tokens;
+        return NON_ALPHANUMERIC.splitAsStream(text.toLowerCase(Locale.ROOT))
+                .filter(token -> !token.isEmpty())
+                .toList();
     }
 }

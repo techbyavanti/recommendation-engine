@@ -6,7 +6,7 @@ interface StrategySelectorProps {
   onChange: (strategy: RecommenderStrategy) => void;
 }
 
-export function StrategySelector({ value, onChange }: StrategySelectorProps) {
+export function StrategySelector({ value, onChange }: Readonly<StrategySelectorProps>) {
   return (
     <label className="strategy-selector">
       <span className="strategy-selector__label">Recommendation strategy</span>

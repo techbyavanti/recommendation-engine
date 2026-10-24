@@ -11,7 +11,6 @@ import io.grpc.stub.StreamObserver;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @GrpcService
 public class RecommenderGrpcService extends RecommenderServiceGrpc.RecommenderServiceImplBase {
@@ -32,7 +31,7 @@ public class RecommenderGrpcService extends RecommenderServiceGrpc.RecommenderSe
         );
         List<ScoredProduct> candidates = request.getCandidatesList().stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
 
         RecommendUseCase.Recommendation recommendation = useCase.recommend(context, candidates);
 

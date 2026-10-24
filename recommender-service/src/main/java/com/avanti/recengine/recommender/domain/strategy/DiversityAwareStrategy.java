@@ -234,12 +234,11 @@ public final class DiversityAwareStrategy implements RecommendationStrategy {
             return Map.of();
         }
         Map<String, List<String>> neighbors = new ConcurrentHashMap<>();
-        List<CompletableFuture<Void>> lookups = new ArrayList<>(ranked.size());
-        for (ScoredProduct product : ranked) {
-            lookups.add(CompletableFuture.runAsync(
-                    () -> neighbors.put(product.productId(), vectorSimilarityPort.similarProductIds(product.productId(), ranked.size())),
-                    EMBEDDING_LOOKUP_EXECUTOR));
-        }
+        List<CompletableFuture<Void>> lookups = ranked.stream()
+                .map(product -> CompletableFuture.runAsync(
+                        () -> neighbors.put(product.productId(), vectorSimilarityPort.similarProductIds(product.productId(), ranked.size())),
+                        EMBEDDING_LOOKUP_EXECUTOR))
+                .toList();
         CompletableFuture.allOf(lookups.toArray(CompletableFuture[]::new)).join();
         return neighbors;
     }

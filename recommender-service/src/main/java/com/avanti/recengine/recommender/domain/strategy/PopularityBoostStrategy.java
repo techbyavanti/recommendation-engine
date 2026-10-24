@@ -1,16 +1,13 @@
 package com.avanti.recengine.recommender.domain.strategy;
 
-import com.avanti.recengine.recommender.domain.CatalogEntry;
 import com.avanti.recengine.recommender.domain.RecommendationContext;
 import com.avanti.recengine.recommender.domain.RecommendationStrategy;
 import com.avanti.recengine.recommender.domain.ScoredProduct;
 import com.avanti.recengine.recommender.port.out.ClickstreamRepositoryPort;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Reranks by blending search-service's own score with clickstream
@@ -56,22 +53,9 @@ public final class PopularityBoostStrategy implements RecommendationStrategy {
         }
         reranked.sort(ScoredProduct.BY_SCORE_DESCENDING);
 
-        Set<String> present = new LinkedHashSet<>();
-        for (ScoredProduct p : reranked) {
-            present.add(p.productId());
-        }
-        int injected = 0;
-        for (String candidateId : clickstream.mostPopularProducts(MAX_INJECTED + present.size())) {
-            if (injected >= MAX_INJECTED) {
-                break;
-            }
-            if (present.contains(candidateId)) {
-                continue;
-            }
-            clickstream.catalogEntry(candidateId).ifPresent(entry -> reranked.add(entry.toScoredProduct(0.0)));
-            injected++;
-        }
-
+        // Enough popular products that MAX_INJECTED remain after the ones already present.
+        List<String> popular = clickstream.mostPopularProducts(MAX_INJECTED + reranked.size());
+        CandidateInjection.appendAbsent(reranked, popular.stream(), MAX_INJECTED, clickstream);
         return reranked;
     }
 

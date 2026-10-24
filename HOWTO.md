@@ -180,7 +180,8 @@ The first argument is the gateway URL. If you do not give it, the script uses `h
 | `scripts/run-recommender-eval.sh` | Runs the offline evaluation and writes `RESULTS.md` |
 | `scripts/capture_demo_snapshots.py` | Captures live query results into `docs/data/` for the GitHub Pages demo |
 | `scripts/scan-cves.sh` | Runs the CI `cve-scan` job on your computer with Trivy |
-| `scripts/sonar-scan.sh` | Runs the CI SonarQube analysis against a local SonarQube server |
+| `scripts/sonar-setup.sh` | Prepares a new SonarQube server: password, rule sets, and quality gate. Prints a token. |
+| `scripts/sonar-scan.sh` | Runs the CI SonarQube analysis against a SonarQube server |
 
 ## Run one part at a time, without Docker
 

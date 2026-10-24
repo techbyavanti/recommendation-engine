@@ -36,17 +36,17 @@ public final class WandsProductCsvLoader {
         List<WandsProductRow> products = new ArrayList<>();
         try (Reader reader = Files.newBufferedReader(productCsv, StandardCharsets.UTF_8);
              CSVParser parser = WANDS_FORMAT.parse(reader)) {
-            for (CSVRecord record : parser) {
+            for (CSVRecord row : parser) {
                 products.add(new WandsProductRow(
-                        record.get("product_id"),
-                        record.get("product_name"),
-                        blankToNull(record.get("product_class")),
-                        blankToNull(record.get("category hierarchy")),
-                        blankToNull(record.get("product_description")),
-                        record.get("product_features"),
-                        parseInt(record.get("rating_count")),
-                        parseDouble(record.get("average_rating")),
-                        parseInt(record.get("review_count"))
+                        row.get("product_id"),
+                        row.get("product_name"),
+                        blankToNull(row.get("product_class")),
+                        blankToNull(row.get("category hierarchy")),
+                        blankToNull(row.get("product_description")),
+                        row.get("product_features"),
+                        parseInt(row.get("rating_count")),
+                        parseDouble(row.get("average_rating")),
+                        parseInt(row.get("review_count"))
                 ));
             }
         } catch (IOException e) {

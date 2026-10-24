@@ -32,6 +32,7 @@ import math
 import random
 import statistics
 from collections import defaultdict
+from itertools import groupby
 from pathlib import Path
 
 import numpy as np
@@ -75,11 +76,8 @@ def load_products():
 
 
 def load_clickstream():
-    rows = []
     with open(DATA_DIR / "clickstream.csv", newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            rows.append(row)
-    return rows
+        return list(csv.DictReader(f))
 
 
 def build_aggregates(rows, products):
@@ -203,11 +201,7 @@ def sigmoid(x):
 
 
 def build_dataset(rows, products, aggregates, rng):
-    # Positive pairs: max event weight per (user, product).
-    pair_weight = defaultdict(float)
-    for row in rows:
-        key = (row["user_id"], row["product_id"])
-        pair_weight[key] = max(pair_weight[key], EVENT_WEIGHT.get(row["event_type"], 0.0))
+    pair_weight = positive_pair_weights(rows)
 
     # Hard negatives: sample only from products that actually appear
     # somewhere in the clickstream (nonzero popularity), not the full ~43K
@@ -219,61 +213,83 @@ def build_dataset(rows, products, aggregates, rng):
     # product have any clickstream footprint" rather than genuine
     # preference modeling — see TRAINING.md for the numbers.
     candidate_pool = [pid for pid in aggregates["popularity"] if aggregates["popularity"][pid] > 0]
-    users = sorted({u for (u, _p) in pair_weight})
+
+    # Insertion order per user, the same order the pairs first occur in.
+    positives_by_user = defaultdict(list)
+    for user_id, product_id in pair_weight.keys():
+        positives_by_user[user_id].append(product_id)
 
     X, y, groups = [], [], []
-    for user_id in users:
-        user_positive_products = [p for (u, p) in pair_weight if u == user_id]
-        user_sessions = sorted(aggregates["sessions_by_user"].get(user_id, set()))
+    for user_id in sorted(positives_by_user):
+        user_positive_products = positives_by_user[user_id]
         for product_id in user_positive_products:
-            position = aggregates["best_position"].get((user_id, product_id))
-            position = position if position and math.isfinite(position) else None
-            # FEATURE 7 context: the real session(s) this pair actually
-            # occurred in — deterministic choice of the lowest session_id
-            # when a pair spans more than one, "other products in that same
-            # session" (excluding the target itself, which isn't "recent" to
-            # itself).
-            pair_sessions = sorted(aggregates["sessions_by_user_product"].get((user_id, product_id), set()))
-            recent_ids = set()
-            if pair_sessions:
-                recent_ids = aggregates["interacted_by_session"].get(pair_sessions[0], set()) - {product_id}
-            recent_segments = session_category_segments(recent_ids, products)
-            X.append(build_features(user_id, product_id, products, aggregates, position, recent_segments))
+            X.append(positive_features(user_id, product_id, products, aggregates))
             y.append(pair_weight[(user_id, product_id)])
             groups.append(user_id)
-
-        # Negative sampling: as many unseen products as positives, per user.
-        seen = aggregates["interacted_by_user"].get(user_id, set()) | set(user_positive_products)
-        negatives_needed = len(user_positive_products)
-        attempts = 0
-        sampled = 0
-        while sampled < negatives_needed and attempts < negatives_needed * 20:
-            attempts += 1
-            candidate = rng.choice(candidate_pool)
-            if candidate in seen:
-                continue
-            # Sample a position from the empirical distribution rather than
-            # a fixed sentinel — since real positions are 1-15, a constant
-            # sentinel for every negative would make base_score_proxy alone
-            # a near-perfect trivial separator between positives and
-            # negatives, not a meaningful signal. See TRAINING.md.
-            negative_position = rng.choice(aggregates["all_positions"])
-            # FEATURE 7 context for a negative: this candidate never
-            # actually appeared in any of this user's sessions, so there's
-            # no real "the session it occurred in" to draw from. Sample one
-            # of the user's actual sessions instead, simulating "if this
-            # candidate had been shown during a real browsing session of
-            # theirs" — same spirit as sampling negative_position from the
-            # empirical position distribution just above, rather than a
-            # fixed sentinel.
-            recent_ids = aggregates["interacted_by_session"].get(rng.choice(user_sessions), set()) if user_sessions else set()
-            recent_segments = session_category_segments(recent_ids, products)
-            X.append(build_features(user_id, candidate, products, aggregates, negative_position, recent_segments))
+        for features in negative_features(user_id, user_positive_products, candidate_pool, products, aggregates, rng):
+            X.append(features)
             y.append(0.0)
             groups.append(user_id)
-            sampled += 1
 
     return np.array(X, dtype=np.float32), np.array(y, dtype=np.float32), np.array(groups)
+
+
+def positive_pair_weights(rows):
+    """The highest event weight per (user, product) pair."""
+    pair_weight = defaultdict(float)
+    for row in rows:
+        key = (row["user_id"], row["product_id"])
+        pair_weight[key] = max(pair_weight[key], EVENT_WEIGHT.get(row["event_type"], 0.0))
+    return pair_weight
+
+
+def positive_features(user_id, product_id, products, aggregates):
+    position = aggregates["best_position"].get((user_id, product_id))
+    position = position if position and math.isfinite(position) else None
+    # FEATURE 7 context: the real session(s) this pair actually
+    # occurred in — deterministic choice of the lowest session_id
+    # when a pair spans more than one, "other products in that same
+    # session" (excluding the target itself, which isn't "recent" to
+    # itself).
+    pair_sessions = sorted(aggregates["sessions_by_user_product"].get((user_id, product_id), set()))
+    recent_ids = set()
+    if pair_sessions:
+        recent_ids = aggregates["interacted_by_session"].get(pair_sessions[0], set()) - {product_id}
+    recent_segments = session_category_segments(recent_ids, products)
+    return build_features(user_id, product_id, products, aggregates, position, recent_segments)
+
+
+def negative_features(user_id, user_positive_products, candidate_pool, products, aggregates, rng):
+    """Yields features for as many unseen products as the user has positives.
+    Gives up after 20 attempts per needed negative."""
+    seen = aggregates["interacted_by_user"].get(user_id, set()) | set(user_positive_products)
+    user_sessions = sorted(aggregates["sessions_by_user"].get(user_id, set()))
+    negatives_needed = len(user_positive_products)
+    attempts = 0
+    sampled = 0
+    while sampled < negatives_needed and attempts < negatives_needed * 20:
+        attempts += 1
+        candidate = rng.choice(candidate_pool)
+        if candidate in seen:
+            continue
+        # Sample a position from the empirical distribution rather than
+        # a fixed sentinel — since real positions are 1-15, a constant
+        # sentinel for every negative would make base_score_proxy alone
+        # a near-perfect trivial separator between positives and
+        # negatives, not a meaningful signal. See TRAINING.md.
+        negative_position = rng.choice(aggregates["all_positions"])
+        # FEATURE 7 context for a negative: this candidate never
+        # actually appeared in any of this user's sessions, so there's
+        # no real "the session it occurred in" to draw from. Sample one
+        # of the user's actual sessions instead, simulating "if this
+        # candidate had been shown during a real browsing session of
+        # theirs" — same spirit as sampling negative_position from the
+        # empirical position distribution just above, rather than a
+        # fixed sentinel.
+        recent_ids = aggregates["interacted_by_session"].get(rng.choice(user_sessions), set()) if user_sessions else set()
+        recent_segments = session_category_segments(recent_ids, products)
+        yield build_features(user_id, candidate, products, aggregates, negative_position, recent_segments)
+        sampled += 1
 
 
 def pairwise_ranking_accuracy(y_true, y_pred, groups):
@@ -301,22 +317,13 @@ def sort_by_group(X, y, groups):
     (it takes group *sizes*, not group *labels*), unlike this script's other
     per-user loops which don't care about row order."""
     order = np.argsort(groups, kind="stable")
-    X_sorted, y_sorted, groups_sorted = X[order], y[order], groups[order]
+    x_sorted, y_sorted, groups_sorted = X[order], y[order], groups[order]
     # group sizes must be in the same order groups appear in groups_sorted —
     # np.unique(..., return_counts=True) sorts by value instead, which
     # silently pairs the wrong size with the wrong group, so sizes are
     # computed by run-length over groups_sorted directly instead.
-    sizes = []
-    current, count = None, 0
-    for g in groups_sorted:
-        if g != current:
-            if current is not None:
-                sizes.append(count)
-            current, count = g, 1
-        else:
-            count += 1
-    sizes.append(count)
-    return X_sorted, y_sorted, groups_sorted, sizes
+    sizes = [len(list(run)) for _, run in groupby(groups_sorted)]
+    return x_sorted, y_sorted, groups_sorted, sizes
 
 
 # rank:ndcg requires integer relevance grades (XGBoost rejects continuous
@@ -337,7 +344,7 @@ def train_pairwise_ranker(X_train, y_train, groups_train, seed):
     (LambdaMART: pairwise gradients weighted by the |ΔNDCG| swapping each
     pair would cause), matching Airbnb's Applying Deep Learning to Airbnb
     Search (KDD 2019, arXiv:1810.09591) rather than pointwise regression."""
-    X_sorted, y_sorted, _, group_sizes = sort_by_group(X_train, y_train, groups_train)
+    x_sorted, y_sorted, _, group_sizes = sort_by_group(X_train, y_train, groups_train)
     model = xgb.XGBRanker(
         objective="rank:ndcg",
         n_estimators=100,
@@ -345,7 +352,7 @@ def train_pairwise_ranker(X_train, y_train, groups_train, seed):
         learning_rate=0.1,
         random_state=seed,
     )
-    model.fit(X_sorted, to_integer_relevance(y_sorted), group=group_sizes)
+    model.fit(x_sorted, to_integer_relevance(y_sorted), group=group_sizes)
     return model
 
 

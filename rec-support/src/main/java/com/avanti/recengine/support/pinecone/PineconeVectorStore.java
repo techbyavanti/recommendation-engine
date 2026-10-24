@@ -6,14 +6,13 @@ import io.pinecone.clients.Index;
 import io.pinecone.clients.Pinecone;
 import io.pinecone.exceptions.PineconeException;
 import io.pinecone.unsigned_indices_model.QueryResponseWithUnsignedIndices;
-import io.pinecone.unsigned_indices_model.ScoredVectorWithUnsignedIndices;
 import io.pinecone.unsigned_indices_model.VectorWithUnsignedIndices;
 import org.openapitools.db_control.client.model.DeletionProtection;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static io.pinecone.commons.IndexInterface.buildUpsertVectorWithUnsignedIndices;
 
@@ -57,18 +56,18 @@ public final class PineconeVectorStore implements AutoCloseable {
         Pinecone controlPlane = newClient(controlPlaneHost, apiKey, tlsEnabled);
         try {
             controlPlane.describeIndex(indexName);
-        } catch (PineconeException notFound) {
+        } catch (PineconeException _) {
+            // The index does not exist yet.
             controlPlane.createServerlessIndex(
                     indexName, "cosine", dimensions, "aws", "us-east-1", DeletionProtection.DISABLED);
         }
     }
 
     public void upsertBatch(List<ProductVector> vectors) {
-        List<VectorWithUnsignedIndices> upserts = new ArrayList<>(vectors.size());
-        for (ProductVector vector : vectors) {
-            upserts.add(buildUpsertVectorWithUnsignedIndices(
-                    vector.id(), toFloatList(vector.values()), null, null, toStruct(vector.metadata())));
-        }
+        List<VectorWithUnsignedIndices> upserts = vectors.stream()
+                .map(vector -> buildUpsertVectorWithUnsignedIndices(
+                        vector.id(), toFloatList(vector.values()), null, null, toStruct(vector.metadata())))
+                .toList();
         index.upsert(upserts, DEFAULT_NAMESPACE);
     }
 
@@ -101,19 +100,13 @@ public final class PineconeVectorStore implements AutoCloseable {
     }
 
     private static List<ScoredMatch> toScoredMatches(QueryResponseWithUnsignedIndices response) {
-        List<ScoredMatch> matches = new ArrayList<>();
-        for (ScoredVectorWithUnsignedIndices match : response.getMatchesList()) {
-            matches.add(new ScoredMatch(match.getId(), match.getScore(), fromStruct(match.getMetadata())));
-        }
-        return matches;
+        return response.getMatchesList().stream()
+                .map(match -> new ScoredMatch(match.getId(), match.getScore(), fromStruct(match.getMetadata())))
+                .toList();
     }
 
     private static List<Float> toFloatList(float[] values) {
-        List<Float> list = new ArrayList<>(values.length);
-        for (float v : values) {
-            list.add(v);
-        }
-        return list;
+        return IntStream.range(0, values.length).mapToObj(i -> values[i]).toList();
     }
 
     private static Struct toStruct(Map<String, Object> metadata) {

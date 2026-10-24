@@ -23,8 +23,8 @@ public final class InMemoryLexicalIndexAdapter implements LexicalIndexPort {
     private final Map<String, Product> productById;
 
     public InMemoryLexicalIndexAdapter(List<WandsProductRow> rows) {
-        Map<String, String> textByProductId = new HashMap<>(rows.size());
-        this.productById = new HashMap<>(rows.size());
+        Map<String, String> textByProductId = HashMap.newHashMap(rows.size());
+        this.productById = HashMap.newHashMap(rows.size());
         for (WandsProductRow row : rows) {
             textByProductId.put(row.productId(), LexicalTextBuilder.build(row));
             productById.put(row.productId(), toProduct(row));

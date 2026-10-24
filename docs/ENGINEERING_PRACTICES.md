@@ -26,7 +26,7 @@ GitHub Actions runs [`.github/workflows/build.yml`](../.github/workflows/build.y
 
 | Job | What it does | Fails on |
 |---|---|---|
-| `test` | Runs the Java tests, the frontend tests, and the production frontend build, with coverage. Then runs the SonarQube analysis. | Any test or build failure, or a failed SonarQube quality gate |
+| `test` | Runs the Java tests, the frontend tests, and the production frontend build, with coverage. Then runs the SonarQube analysis on a temporary SonarQube server. | Any test or build failure, or a failed SonarQube quality gate |
 | `cve-scan` | Scans the Maven and npm dependencies, the Dockerfiles, and all files with Trivy | Critical, high, or medium CVEs, Dockerfile misconfigurations, or secrets |
 | `sast` | Runs Semgrep static analysis on the Java and TypeScript code | Any security finding |
 | `secret-scan` | Scans the full Git history with Gitleaks | Any committed secret |
@@ -41,22 +41,31 @@ SonarQube analyzes the Java, TypeScript, Python, and shell code, the Dockerfiles
 
 | Item | Details |
 |---|---|
-| Where it runs | SonarQube Cloud, in the CI `test` job. The step runs only when the `SONAR_TOKEN` repository secret is set. |
-| Quality gate | The default gate applies to new code: no new issues, all security hotspots reviewed, at least 80% coverage, and at most 3% duplicated lines. |
+| Where it runs | A temporary SonarQube Community container in the CI `test` job. The job deletes it at the end. No account or secret is necessary. |
+| Rules | "Sonar way comprehensive" for each language, for example all 618 Java rules. A new server uses the smaller "Sonar way core" rule sets. |
+| Quality gate | The job fails on any bug, vulnerability, code smell, or unreviewed security hotspot, on more than 3% duplicated lines, or on less than 50% coverage. The gate checks all code, because a temporary server has no earlier analysis to find new code. |
 | Coverage | JaCoCo for Java (`mvn verify`) and Vitest for TypeScript (`npm test -- --coverage`) |
-| Local analysis | `scripts/sonar-scan.sh` runs the same analysis against a local SonarQube server |
+| Results | The job summary shows the measures and each open issue. The `sonarqube-report` artifact keeps the JSON files. |
 
-To connect SonarQube Cloud:
+Two scripts do the work, in CI and on your computer:
 
-1. Import the repository at [sonarcloud.io](https://sonarcloud.io) into the `techbyavanti` organization.
-2. In the project settings, turn off automatic analysis. The CI step does the analysis.
-3. Create a token, and add it as the `SONAR_TOKEN` repository secret in GitHub.
+| Script | What it does |
+|---|---|
+| `scripts/sonar-setup.sh` | Sets the admin password, the rule sets, and the quality gate on a new server. Prints an analysis token. |
+| `scripts/sonar-scan.sh` | Runs the analysis, waits for the quality gate, and saves the report in `target/sonar-report/` |
+
+To run the analysis on your computer:
+
+1. Start a server: `docker run -d --name sonarqube -p 9000:9000 sonarqube:community`.
+2. Set a new admin password: `export SONAR_ADMIN_PASSWORD='<password>'`. Use at least 12 characters, with an uppercase letter, a lowercase letter, a digit, and a special character.
+3. Run `SONAR_TOKEN="$(./scripts/sonar-setup.sh)" ./scripts/sonar-scan.sh`.
 
 Rules for clean code:
 
 - Fix a finding in the code. Do not change the rule or the quality gate.
 - When a finding does not apply, add `NOSONAR` to the line, with a comment that gives the reason. For example, the training script uses a seeded random generator for a reproducible split, not for security.
 - Before a change in behavior-sensitive code, add a test that records the current behavior. For example, `EmbeddingTextBuilderTest` recorded the category format before a regular expression was replaced.
+- After a refactor of a strategy, run the offline evaluation. The quality metrics in `RESULTS.md` must not change.
 
 ## Security
 

@@ -11,10 +11,10 @@ public record ProductVector(String id, float[] values, Map<String, Object> metad
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof ProductVector that
-                && Objects.equals(id, that.id)
-                && Arrays.equals(values, that.values)
-                && Objects.equals(metadata, that.metadata);
+        return other instanceof ProductVector(String otherId, float[] otherValues, Map<String, Object> otherMetadata)
+                && Objects.equals(id, otherId)
+                && Arrays.equals(values, otherValues)
+                && Objects.equals(metadata, otherMetadata);
     }
 
     @Override

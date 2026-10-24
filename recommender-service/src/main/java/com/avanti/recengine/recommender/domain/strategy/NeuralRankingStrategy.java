@@ -125,7 +125,9 @@ public final class NeuralRankingStrategy implements RecommendationStrategy {
                 ? 1.0f : 0.0f;
         float baseScore = (float) sigmoid(product.score());
         float popularity = (float) Math.log1p(clickstream.popularityScore(product.productId()));
-        float coOccurrence = (float) Math.log1p(clickstream.coOccurrenceCount(product.productId(), userInteracted));
+        // Rule S9395 asks for this explicit cast and rule S1905 calls it unnecessary. A count is far
+        // below 2^53, so the conversion is exact either way.
+        float coOccurrence = (float) Math.log1p((double) clickstream.coOccurrenceCount(product.productId(), userInteracted)); // NOSONAR
         float avgRating = (float) (product.averageRating() / 5.0);
         float reviewCount = (float) Math.log1p(product.ratingCount());
         float sessionCategoryOverlap = sessionCategoryOverlap(product.categoryHierarchy(), recentCategorySegments);
