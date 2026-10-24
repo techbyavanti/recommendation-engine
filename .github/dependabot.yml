@@ -39,6 +39,12 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # Each Vitest package needs the same version of the others. Separate
+      # pull requests for them cannot pass, so all versions go in one.
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
       npm-patch-minor:
         update-types:
           - minor
