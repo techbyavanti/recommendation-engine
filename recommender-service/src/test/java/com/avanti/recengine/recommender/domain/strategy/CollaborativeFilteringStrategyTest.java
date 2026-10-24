@@ -78,8 +78,7 @@ class CollaborativeFilteringStrategyTest {
         RecommendationContext historyContext = new RecommendationContext("chair", "user-b", Strategy.COLLABORATIVE);
         double historyBoost = new CollaborativeFilteringStrategy(repo).apply(historyContext, base).get(0).score();
 
-        assertThat(sessionBoost).isGreaterThan(historyBoost);
-        assertThat(sessionBoost).isCloseTo(historyBoost * 2.5, org.assertj.core.data.Offset.offset(0.0001));
+        assertThat(sessionBoost).isGreaterThan(historyBoost).isCloseTo(historyBoost * 2.5, org.assertj.core.data.Offset.offset(0.0001));
     }
 
     @Test
@@ -129,8 +128,7 @@ class CollaborativeFilteringStrategyTest {
         // popular: 40 / sqrt(10000*10000) = 0.0040
         // niche:   30 / sqrt(80*10000)     = 0.0335
         assertThat(popularSimilarity).isCloseTo(0.0040, org.assertj.core.data.Offset.offset(0.0001));
-        assertThat(nicheSimilarity).isCloseTo(0.0335, org.assertj.core.data.Offset.offset(0.0001));
-        assertThat(nicheSimilarity).isGreaterThan(popularSimilarity);
+        assertThat(nicheSimilarity).isCloseTo(0.0335, org.assertj.core.data.Offset.offset(0.0001)).isGreaterThan(popularSimilarity);
 
         List<ScoredProduct> base = List.of(
                 new ScoredProduct("popular-but-unrelated", 5.0, "a", "Chairs", "Furniture / Chairs", 4.0, 10),

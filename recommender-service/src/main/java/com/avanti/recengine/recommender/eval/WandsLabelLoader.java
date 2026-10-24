@@ -45,10 +45,10 @@ public final class WandsLabelLoader {
 
         try (Reader reader = Files.newBufferedReader(labelCsv, StandardCharsets.UTF_8);
              CSVParser parser = format.parse(reader)) {
-            for (CSVRecord record : parser) {
-                String queryId = record.get("query_id");
-                String productId = record.get("product_id");
-                int grade = gradeOf(record.get("label"));
+            for (CSVRecord row : parser) {
+                String queryId = row.get("query_id");
+                String productId = row.get("product_id");
+                int grade = gradeOf(row.get("label"));
                 byQuery.computeIfAbsent(queryId, id -> new HashMap<>()).put(productId, grade);
             }
         } catch (IOException e) {

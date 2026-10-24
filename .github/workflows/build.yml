@@ -12,10 +12,16 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      # Secrets cannot appear in `if:` conditions, so the SonarQube steps
-      # check this variable. It is empty on forks and until the secret is set.
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    # A temporary SonarQube server for the code-quality analysis. It starts
+    # with the job, so it is ready when the build is done, and it is deleted
+    # with the job. No account or secret is necessary.
+    services:
+      sonarqube:
+        image: sonarqube:26.10.0.133078-community
+        ports:
+          - 9000:9000
+        env:
+          SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: 'true'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -40,9 +46,11 @@ jobs:
       # this platform is genuinely native (unlike macOS, where the
       # "osx-aarch_64" classifier ships an x86_64 binary requiring Rosetta 2
       # — a dev-machine-only concern, not relevant here).
-      # `verify` also writes each module's JaCoCo coverage report.
+      # `verify` also writes each module's JaCoCo coverage report. The
+      # libraries for the SonarQube analysis are copied in the same run, so
+      # the reactor supplies the internal rec-support jar.
       - name: Run Java unit tests
-        run: mvn -B verify
+        run: mvn -B verify dependency:copy-dependencies -DincludeScope=test
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -63,21 +71,35 @@ jobs:
         working-directory: web
         run: npm run build
 
-      # --- Code quality: SonarQube Cloud analyzes Java, TypeScript, Python,
-      #     shell and Dockerfiles with the coverage from the steps above.
-      #     The quality gate fails this job on new bugs, vulnerabilities,
-      #     code smells, duplication, or low coverage on new code.
-      #     Configuration: sonar-project.properties. ---
-      - name: Copy Java libraries for SonarQube
-        if: env.SONAR_TOKEN != ''
-        run: mvn -B -q dependency:copy-dependencies -DincludeScope=test
+      # --- Code quality: SonarQube analyzes Java, TypeScript, Python, shell
+      #     and Dockerfiles with the coverage from the steps above. The
+      #     quality gate fails this job on any bug, vulnerability, code
+      #     smell, or unreviewed hotspot, on more than 3% duplication, or on
+      #     coverage below 50%. Configuration: sonar-project.properties. ---
+      - name: Prepare SonarQube
+        run: |
+          # Both values are for this job's temporary server only.
+          SONAR_ADMIN_PASSWORD="Ci-$(openssl rand -hex 16)-Pw1"
+          echo "::add-mask::${SONAR_ADMIN_PASSWORD}"
+          SONAR_TOKEN="$(SONAR_ADMIN_PASSWORD="${SONAR_ADMIN_PASSWORD}" ./scripts/sonar-setup.sh)"
+          echo "::add-mask::${SONAR_TOKEN}"
+          echo "SONAR_TOKEN=${SONAR_TOKEN}" >> "$GITHUB_ENV"
 
       - name: SonarQube analysis
-        if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@v8
+        env:
+          SONAR_SKIP_BUILD: 'true'
+        run: ./scripts/sonar-scan.sh
+
+      - name: Add the SonarQube report to the job summary
+        if: always() && hashFiles('target/sonar-report/summary.md') != ''
+        run: cat target/sonar-report/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the SonarQube report
+        if: always() && hashFiles('target/sonar-report/summary.md') != ''
+        uses: actions/upload-artifact@v7
         with:
-          args: >
-            -Dsonar.qualitygate.wait=true
+          name: sonarqube-report
+          path: target/sonar-report/
 
   # --- Trivy filesystem scan: known CVEs in resolved dependencies (Maven
   #     and npm both — trivy fs scans package-lock.json too), Dockerfile

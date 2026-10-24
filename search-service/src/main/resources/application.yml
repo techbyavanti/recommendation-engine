@@ -18,8 +18,9 @@ search-service:
   models:
     embedding-dir: ${SEARCH_MODELS_EMBEDDING_DIR:models/bge-small-en-v1.5}
   data:
-    # The lexical (BM25) index builds itself from this file once at startup —
-    # see TODO.md #6. Same file the ingestion CLI embeds into Pinecone.
+    # The lexical (BM25) index for hybrid dense+lexical retrieval builds
+    # itself from this file once at startup. Same file the ingestion CLI
+    # embeds into Pinecone.
     product-csv: ${SEARCH_DATA_PRODUCT_CSV:data/product.csv}
   hybrid:
     # Each sub-retriever (dense, lexical) is queried for this many results

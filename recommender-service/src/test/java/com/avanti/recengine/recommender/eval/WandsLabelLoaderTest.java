@@ -36,11 +36,12 @@ class WandsLabelLoaderTest {
     }
 
     @Test
-    void unknownLabelValueThrows() {
+    void unknownLabelValueThrows() throws URISyntaxException {
         // A malformed label.csv is a data-integrity bug worth failing loudly on,
         // same convention as the sibling `search` project's RelevanceGrade.fromLabel.
+        Path malformed = malformedFixture();
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
-                () -> WandsLabelLoader.load(malformedFixture()));
+                () -> WandsLabelLoader.load(malformed));
     }
 
     private Path fixture() throws URISyntaxException {

@@ -28,7 +28,7 @@ services:
       PINECONE_INDEX: wands-products
       SEARCH_MODELS_EMBEDDING_DIR: /models/bge-small-en-v1.5
       # The served application builds an in-memory BM25 lexical index from
-      # this file at startup (TODO.md #6's hybrid dense+lexical retrieval),
+      # this file at startup (hybrid dense+lexical retrieval),
       # in addition to the ingestion CLI (run via `docker compose run`)
       # reading it to embed products into Pinecone — both need this mount.
       SEARCH_DATA_PRODUCT_CSV: /data/product.csv

@@ -7,6 +7,7 @@ import com.avanti.recengine.recommender.domain.UserProfile;
 import com.avanti.recengine.recommender.port.out.ClickstreamRepositoryPort;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -108,42 +109,25 @@ public final class CollaborativeFilteringStrategy implements RecommendationStrat
             // recommendation on its own merits — averaging in the rest of a
             // possibly-diverse profile would dilute that signal rather than
             // sharpen it.
-            double maxSessionSimilarity = 0.0;
-            for (String recentId : recentProductIds) {
-                maxSessionSimilarity = Math.max(maxSessionSimilarity, clickstream.itemSimilarity(product.productId(), recentId));
-            }
-            double maxHistorySimilarity = 0.0;
-            for (String interactedId : profile.interactedProductIds()) {
-                maxHistorySimilarity = Math.max(maxHistorySimilarity, clickstream.itemSimilarity(product.productId(), interactedId));
-            }
-            double boost = SESSION_SIMILARITY_WEIGHT * maxSessionSimilarity + SIMILARITY_WEIGHT * maxHistorySimilarity;
+            double boost = SESSION_SIMILARITY_WEIGHT * maxSimilarity(product, recentProductIds)
+                    + SIMILARITY_WEIGHT * maxSimilarity(product, profile.interactedProductIds());
             reranked.add(product.withScore(product.score() + boost));
         }
         reranked.sort(ScoredProduct.BY_SCORE_DESCENDING);
 
-        Set<String> present = new LinkedHashSet<>();
-        for (ScoredProduct p : reranked) {
-            present.add(p.productId());
-        }
-
-        int injected = 0;
         Set<String> injectionSeeds = new LinkedHashSet<>(profile.interactedProductIds());
         injectionSeeds.addAll(recentProductIds);
-        for (String seedProductId : injectionSeeds) {
-            if (injected >= MAX_INJECTED) {
-                break;
-            }
-            for (String relatedId : clickstream.relatedProducts(seedProductId, MAX_INJECTED)) {
-                if (injected >= MAX_INJECTED || present.contains(relatedId)) {
-                    continue;
-                }
-                clickstream.catalogEntry(relatedId).ifPresent(entry -> reranked.add(entry.toScoredProduct(0.0)));
-                present.add(relatedId);
-                injected++;
-            }
-        }
-
+        CandidateInjection.appendAbsent(reranked,
+                injectionSeeds.stream().flatMap(seed -> clickstream.relatedProducts(seed, MAX_INJECTED).stream()),
+                MAX_INJECTED, clickstream);
         return reranked;
+    }
+
+    /** The highest similarity between the candidate and any of the products, or 0 when there are none. */
+    private double maxSimilarity(ScoredProduct candidate, Collection<String> productIds) {
+        return productIds.stream()
+                .mapToDouble(productId -> clickstream.itemSimilarity(candidate.productId(), productId))
+                .reduce(0.0, Math::max);
     }
 
     @Override

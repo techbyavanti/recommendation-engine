@@ -6,7 +6,7 @@ interface ResultCardProps {
   rank: number;
 }
 
-export function ResultCard({ product, rank }: ResultCardProps) {
+export function ResultCard({ product, rank }: Readonly<ResultCardProps>) {
   return (
     <article className="result-card">
       <div className="result-card__rank">#{rank}</div>

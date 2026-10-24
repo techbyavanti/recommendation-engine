@@ -4,7 +4,6 @@ import com.avanti.recengine.support.pinecone.PineconeVectorStore;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
-import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -41,10 +40,11 @@ class PineconeVectorSimilarityAdapterSmokeTest {
             PineconeVectorSimilarityAdapter adapter = new PineconeVectorSimilarityAdapter(store);
             List<String> similar = adapter.similarProductIds(KNOWN_PRODUCT_ID, 5);
 
-            assertThat(similar).isNotEmpty();
-            assertThat(similar).doesNotContain(KNOWN_PRODUCT_ID);
-            assertThat(similar).doesNotHaveDuplicates();
-            assertThat(similar.size()).isLessThanOrEqualTo(5);
+            assertThat(similar)
+                    .isNotEmpty()
+                    .doesNotContain(KNOWN_PRODUCT_ID)
+                    .doesNotHaveDuplicates()
+                    .hasSizeLessThanOrEqualTo(5);
         }
     }
 
@@ -64,9 +64,7 @@ class PineconeVectorSimilarityAdapterSmokeTest {
                     HttpRequest.newBuilder(URI.create(CONTROL_PLANE_HOST + "/indexes")).GET().build(),
                     HttpResponse.BodyHandlers.discarding());
             return response.statusCode() == 200;
-        } catch (ConnectException e) {
-            return false;
-        } catch (Exception e) {
+        } catch (Exception _) {
             return false;
         }
     }

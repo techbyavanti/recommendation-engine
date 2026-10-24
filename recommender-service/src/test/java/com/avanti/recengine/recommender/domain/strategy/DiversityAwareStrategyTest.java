@@ -45,7 +45,7 @@ class DiversityAwareStrategyTest {
         Set<String> distinctCategoriesInTop5 = result.subList(0, 5).stream()
                 .map(p -> p.categoryHierarchy().split("/")[0].trim())
                 .collect(Collectors.toSet());
-        assertThat(distinctCategoriesInTop5.size()).isGreaterThan((int) undiversifiedDistinctCategories);
+        assertThat(distinctCategoriesInTop5).hasSizeGreaterThan((int) undiversifiedDistinctCategories);
     }
 
     @Test
@@ -84,11 +84,10 @@ class DiversityAwareStrategyTest {
 
     @Test
     void rejectsOutOfRangeLambda() {
-        org.assertj.core.api.Assertions.assertThatThrownBy(
-                        () -> new DiversityAwareStrategy(new PassthroughStrategy(), 1.5))
+        RecommendationStrategy base = new PassthroughStrategy();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new DiversityAwareStrategy(base, 1.5))
                 .isInstanceOf(IllegalArgumentException.class);
-        org.assertj.core.api.Assertions.assertThatThrownBy(
-                        () -> new DiversityAwareStrategy(new PassthroughStrategy(), -0.1))
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new DiversityAwareStrategy(base, -0.1))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

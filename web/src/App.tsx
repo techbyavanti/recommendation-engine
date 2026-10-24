@@ -6,7 +6,7 @@ import { ResultsGrid } from "./components/ResultsGrid";
 import { LoadingState } from "./components/LoadingState";
 import { ErrorState } from "./components/ErrorState";
 import { SEARCH_QUERY } from "./graphql/queries";
-import type { RecommenderStrategy, SearchQueryResult, SearchQueryVars } from "./graphql/types";
+import type { RecommenderStrategy } from "./graphql/types";
 import "./App.css";
 
 const DEFAULT_STRATEGY: RecommenderStrategy = "COLLABORATIVE";
@@ -15,7 +15,7 @@ const TOP_K = 12;
 export default function App() {
   const [query, setQuery] = useState("");
   const [strategy, setStrategy] = useState<RecommenderStrategy>(DEFAULT_STRATEGY);
-  const [runSearch, { data, loading, error }] = useLazyQuery<SearchQueryResult, SearchQueryVars>(SEARCH_QUERY, {
+  const [runSearch, { data, loading, error }] = useLazyQuery(SEARCH_QUERY, {
     fetchPolicy: "network-only",
   });
 

@@ -5,7 +5,7 @@ interface ResultsGridProps {
   products: Product[];
 }
 
-export function ResultsGrid({ products }: ResultsGridProps) {
+export function ResultsGrid({ products }: Readonly<ResultsGridProps>) {
   if (products.length === 0) {
     return <p className="results-empty">No results for this query.</p>;
   }

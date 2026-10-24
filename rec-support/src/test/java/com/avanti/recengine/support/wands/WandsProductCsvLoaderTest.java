@@ -42,8 +42,9 @@ class WandsProductCsvLoaderTest {
 
         String text = EmbeddingTextBuilder.build(bed);
 
-        assertThat(text).startsWith("solid wood platform bed. Beds. Furniture > Bedroom Furniture > Beds & Headboards > Beds > Twin Beds. A comfortable bed, built to last.");
-        assertThat(text).doesNotContain("material:wood");
+        assertThat(text)
+                .startsWith("solid wood platform bed. Beds. Furniture > Bedroom Furniture > Beds & Headboards > Beds > Twin Beds. A comfortable bed, built to last.")
+                .doesNotContain("material:wood");
     }
 
     @Test
