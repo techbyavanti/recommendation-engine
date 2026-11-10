@@ -4,20 +4,20 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Recommendation Engine — Strategy Comparison (Snapshot Demo)</title>
-<meta name="description" content="Real captured results comparing 6 recommendation strategies (popularity, collaborative filtering, bandit exploration, an ONNX neural ranker, and MMR diversity) over the WANDS furniture catalog." />
+<meta name="description" content="This page compares 6 recommendation strategies on the WANDS furniture catalog. The strategies are a baseline, popularity, collaborative filtering, bandit exploration, an ONNX neural ranker, and MMR diversity. The results come from one recorded run." />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 <div class="snapshot-banner">
-  📸 Static snapshot — these results were captured once from a locally-running instance, not a live search.
-  <a href="https://github.com/avantiwhenever/recommendation-engine">Run it yourself</a> or read the
+  📸 Static snapshot. These results come from one run on a local instance. This is not a live search.
+  <a href="https://github.com/avantiwhenever/recommendation-engine">Run the engine yourself</a> or read the
   <a href="https://github.com/avantiwhenever/recommendation-engine/blob/main/RESULTS.md">offline evaluation results</a>.
 </div>
 
 <header>
   <div class="title-row">
     <h1>Recommendation Engine</h1>
-    <span class="subtitle">— 6 strategies, same query, same catalog, side by side</span>
+    <span class="subtitle">— 6 strategies, 1 query, 1 catalog, side by side</span>
   </div>
   <div class="controls">
     <label for="query-select">Query</label>
@@ -30,19 +30,21 @@
   <div class="columns-scroller">
     <div class="columns" id="columns"></div>
   </div>
-  <p class="hover-note">Hover any product card for its full details — category, rating, score, and why it was shown.</p>
+  <p class="hover-note">Put the pointer on a product card to see all its data: category, rating, score, and the reason that the engine shows it.</p>
 
   <section class="glance" id="five-strategies-and-how-they-differ">
-    <h2>Six strategies, and how they differ</h2>
+    <h2>Six strategies and their differences</h2>
     <p class="glance-sub">
-      Every strategy receives the exact same baseline candidates — a widened pool from <code>search-service</code>
-      (hybrid dense + lexical retrieval), narrowed by a hard eligibility filter before any strategy runs — and either
-      leaves them alone, re-ranks them, or adds/removes products — never a from-scratch retrieval of its own.
-      Numbers below are from RESULTS.md's independent WANDS relevance eval — scored against WANDS's own human
-      relevance grades, which no strategy is trained or tuned against, rather than the clickstream-derived
-      labels the strategies themselves read from
-      (<a href="https://github.com/avantiwhenever/recommendation-engine/blob/main/RESULTS.md">full methodology, the second implicit-clickstream table, and honest caveats in RESULTS.md</a>).
-      Click any card for how it works and its grounding in the literature.
+      All strategies get the same baseline candidates. <code>search-service</code> supplies a large pool with
+      hybrid retrieval (dense and lexical). Then a hard eligibility filter removes the products that are not
+      eligible. This occurs before a strategy starts. Each strategy then does one of these tasks: it keeps the
+      candidates as they are, it changes their order, or it adds or removes products. No strategy does its own
+      retrieval.
+      The numbers below come from the independent WANDS relevance evaluation in RESULTS.md. This evaluation uses
+      the human relevance grades in WANDS. No strategy uses these grades for training or tuning. The strategies
+      use labels from clickstream data.
+      (<a href="https://github.com/avantiwhenever/recommendation-engine/blob/main/RESULTS.md">RESULTS.md has the full method, a second table for implicit clickstream data, and the limits of the results</a>.)
+      Click a card to see how the strategy works and its sources in the literature.
     </p>
     <div class="glance-grid" id="glance-grid"></div>
   </section>
@@ -57,9 +59,9 @@
     <p class="modal-tagline" id="modal-tagline"></p>
     <h4>How it works</h4>
     <p id="modal-how"></p>
-    <h4>How it differs from the others</h4>
+    <h4>Differences from the other strategies</h4>
     <p id="modal-differs"></p>
-    <h4>Independent WANDS relevance eval</h4>
+    <h4>Independent WANDS relevance evaluation</h4>
     <table class="modal-metrics-table">
       <thead>
         <tr><th>nDCG@5</th><th>MRR</th><th>Recall@5</th><th>Precision@5</th></tr>
@@ -68,7 +70,7 @@
         <tr id="modal-metrics-row"></tr>
       </tbody>
     </table>
-    <h4>Grounding</h4>
+    <h4>Sources</h4>
     <p id="modal-grounding"></p>
   </div>
 </div>
@@ -79,15 +81,15 @@
   <div class="hover-card-row"><span>Product class</span><span id="hover-class"></span></div>
   <div class="hover-card-row"><span>Rating</span><span id="hover-rating"></span></div>
   <div class="hover-card-row"><span>Score</span><span id="hover-score"></span></div>
-  <div class="hover-card-row"><span>Why shown</span><span id="hover-source"></span></div>
+  <div class="hover-card-row"><span>Reason shown</span><span id="hover-source"></span></div>
   <div class="hover-card-id">productId: <span id="hover-id"></span></div>
 </div>
 
 <footer>
-  Six recommendation strategies, same query, same catalog: None (baseline) → Popularity → Collaborative
-  Filtering → Bandit Exploration → Neural Ranking (ONNX) → Diverse Popularity (MMR). Architecture, offline
-  evaluation methodology, and the live demo app are all in the
-  <a href="https://github.com/avantiwhenever/recommendation-engine">GitHub repo</a>.
+  This page shows six recommendation strategies with the same query and the same catalog: None (baseline) →
+  Popularity → Collaborative Filtering → Bandit Exploration → Neural Ranking (ONNX) → Diverse Popularity (MMR).
+  The <a href="https://github.com/avantiwhenever/recommendation-engine">GitHub repository</a> has the
+  architecture, the offline evaluation method, and the live demo app.
   <div class="page-views">
     <img src="https://api.visitorbadge.io/api/visitors?path=avantiwhenever.github.io%2Frecommendation-engine&label=Page%20views&countColor=%23555f6d&style=flat"
          alt="Page view count" loading="lazy" height="20" />
