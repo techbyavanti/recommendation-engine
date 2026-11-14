@@ -36,8 +36,8 @@
     <protobuf-plugin.version>0.6.1</protobuf-plugin.version>
     <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
 
-    <onnxruntime.version>1.31.0</onnxruntime.version>
-    <djl-tokenizers.version>0.39.0</djl-tokenizers.version>
+    <onnxruntime.version>1.31.1</onnxruntime.version>
+    <djl-tokenizers.version>0.40.0</djl-tokenizers.version>
     <!-- Pinecone Local (docs.pinecone.io) is a fixed emulator on API version
          2025-01 whose index-describe responses lack the `vector_type` field
          that pinecone-client 4.x+ requires and fails to deserialize without
@@ -52,17 +52,17 @@
          (fixed in 7.0.9). Boot 4 also ships first-party gRPC starters, which
          replaced the net.devh grpc-spring-boot-starter (Boot 3 only). Spring
          GraphQL, JUnit and AssertJ versions come from Boot's own BOM. -->
-    <spring-boot.version>4.1.1</spring-boot.version>
-    <tomcat.version>11.0.27</tomcat.version>
+    <spring-boot.version>4.1.2</spring-boot.version>
+    <tomcat.version>11.0.29</tomcat.version>
     <!-- Two Jackson lines coexist: Jackson 2 (com.fasterxml), still used
          transitively by pinecone-client, and Jackson 3 (tools.jackson), used
          by Spring Boot 4 itself. Both share jackson-annotations 2.21. -->
-    <jackson2.version>2.22.4</jackson2.version>
-    <jackson3.version>3.2.4</jackson3.version>
+    <jackson2.version>2.23.0</jackson2.version>
+    <jackson3.version>3.3.0</jackson3.version>
     <picocli.version>4.7.7</picocli.version>
     <slf4j.version>2.0.20</slf4j.version>
     <!-- 0.8.15 is the first JaCoCo release that reads Java 26 class files. -->
-    <jacoco.version>0.8.15</jacoco.version>
+    <jacoco.version>0.8.16</jacoco.version>
   </properties>
 
   <dependencyManagement>
@@ -95,7 +95,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.19.Final</version>
+        <version>4.2.20.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -251,7 +251,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
