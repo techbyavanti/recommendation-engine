@@ -70,7 +70,7 @@ The optional `categoryFilter` and `minRating` arguments of the GraphQL `search` 
 
 - **Clickstream evaluation.** The relevance grades come from the same synthetic clickstream that the strategies read. Thus, this ground truth is circular. `RESULTS.md` says this.
 - **Independent WANDS relevance evaluation.** The scores use the WANDS human relevance labels. No strategy trains on these labels. This is the more reliable of the two. All six strategies have similar scores here (nDCG@5 from 0.90 to 0.97). No strategy is clearly the best.
-- **Off-policy (IPS) evaluation.** An item-level Inverse Propensity Scoring estimate of the reward of each strategy. It uses the known logging policy of the synthetic clickstream (see `CLICKSTREAM.md` in `avantiwhenever/WANDS`). The table shows the raw estimate, the clipped estimate, and the effective sample size.
+- **Off-policy (IPS) evaluation.** An item-level Inverse Propensity Scoring estimate of the reward of each strategy. It uses the known logging policy of the synthetic clickstream (see `CLICKSTREAM.md` in `techbyavanti/WANDS`). The table shows the raw estimate, the clipped estimate, and the effective sample size.
 
 `TemporalClickstreamIndex` replays the sessions in time order. Thus, the features of a held-out session never include events from after that session.
 
@@ -129,6 +129,6 @@ The optional `categoryFilter` and `minRating` arguments of the GraphQL `search` 
 - **Each module generates its own proto stubs.** The three modules that use the proto files each generate the stubs, instead of one shared artifact. This is simpler for a small repository. It costs some extra compile time. It has no functional effect, because gRPC messages are compatible on the wire.
 - **Pinecone Local is for development only.** It does not keep data and holds a maximum of 100,000 vectors. See [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
 - **The IPS estimator is item-level.** It treats each item in the first 5 results as an independent action. It is not a full list-level estimator.
-- **The clickstream is synthetic.** It does not show real user behavior. `CLICKSTREAM.md` in `avantiwhenever/WANDS` says this. See [DATA.md](DATA.md).
+- **The clickstream is synthetic.** It does not show real user behavior. `CLICKSTREAM.md` in `techbyavanti/WANDS` says this. See [DATA.md](DATA.md).
 - **The bandit priors do not change.** `BanditExploreStrategy` calculates them one time from historical data. There is no live traffic to update them.
 - **Session recency has no time decay.** `CollaborativeFilteringStrategy` gives the session a fixed 2.5 times weight. `NeuralRankingStrategy` uses a session feature with no time decay. The proto sends the session products as a list without timestamps.

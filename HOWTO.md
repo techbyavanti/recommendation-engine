@@ -31,7 +31,7 @@ Each step has a check, so that you can make sure that the step worked before you
 This script puts four files into `data/`:
 
 - `product.csv`, `query.csv`, and `label.csv` from `wayfair/WANDS`
-- `clickstream.csv`, the synthetic clickstream from `avantiwhenever/WANDS`
+- `clickstream.csv`, the synthetic clickstream from `techbyavanti/WANDS`
 
 **Check:** Run `wc -l data/*.csv`. Each file has one header line. The expected line counts are:
 
