@@ -9,7 +9,7 @@ The project uses two data sources: a real product catalog and a synthetic clicks
 | Product catalog (`product.csv`) | [WANDS](https://github.com/wayfair/WANDS) from Wayfair | 42,994 products | Real |
 | Search queries (`query.csv`) | WANDS | 480 queries | Real |
 | Relevance labels (`label.csv`) | WANDS | 233,448 human labels: Exact, Partial, or Irrelevant | Real |
-| Clickstream (`clickstream.csv`) | [avantiwhenever/WANDS](https://github.com/avantiwhenever/WANDS/blob/main/CLICKSTREAM.md) | 170,990 events, 12,818 sessions, 5,000 users | **Synthetic** |
+| Clickstream (`clickstream.csv`) | [techbyavanti/WANDS](https://github.com/techbyavanti/WANDS/blob/main/CLICKSTREAM.md) | 170,990 events, 12,818 sessions, 5,000 users | **Synthetic** |
 
 To download all four files, run `./scripts/download-data.sh`. The files go into `data/`, which Git ignores.
 
@@ -23,7 +23,7 @@ WANDS has no user behavior. The recommendation strategies need behavior data, so
 - **Click probability.** The probability depends on the position of the product and on its WANDS relevance grade. The position factor is `1 / position^0.8`.
 - **Deterministic.** With the same seed (default 42), the generator always gives the same file.
 
-[CLICKSTREAM.md](https://github.com/avantiwhenever/WANDS/blob/main/CLICKSTREAM.md) gives the full method.
+[CLICKSTREAM.md](https://github.com/techbyavanti/WANDS/blob/main/CLICKSTREAM.md) gives the full method.
 
 **Important:** this data does not represent real user behavior. Results that use the clickstream show how a strategy behaves on this model of users. They do not predict results with real users.
 

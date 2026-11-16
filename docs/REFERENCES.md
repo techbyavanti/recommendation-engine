@@ -29,4 +29,4 @@ These surveys give context for future work. The project does not implement their
 ## Data
 
 - [WANDS: Wayfair ANnotation DataSet](https://github.com/wayfair/WANDS): the product catalog, queries, and relevance labels
-- [CLICKSTREAM.md](https://github.com/avantiwhenever/WANDS/blob/main/CLICKSTREAM.md): the method for the synthetic clickstream
+- [CLICKSTREAM.md](https://github.com/techbyavanti/WANDS/blob/main/CLICKSTREAM.md): the method for the synthetic clickstream

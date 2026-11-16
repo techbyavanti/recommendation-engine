@@ -18,7 +18,7 @@ import java.util.Locale;
  *
  * <p>IPS makes that estimate possible here specifically because, unlike
  * almost every real production system, this project's synthetic clickstream
- * (<a href="https://github.com/avantiwhenever/WANDS/blob/main/CLICKSTREAM.md">
+ * (<a href="https://github.com/techbyavanti/WANDS/blob/main/CLICKSTREAM.md">
  * WANDS' {@code CLICKSTREAM.md}</a>) has a <b>fully known, documented logging
  * policy</b> — a cascade click model with closed-form probabilities, not an
  * opaque production ranker. That known policy is what {@link #outcomePropensity}
