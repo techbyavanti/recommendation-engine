@@ -61,6 +61,7 @@
     <jackson3.version>3.2.4</jackson3.version>
     <picocli.version>4.7.7</picocli.version>
     <slf4j.version>2.0.20</slf4j.version>
+    <guava.version>33.7.2-jre</guava.version>
     <!-- 0.8.15 is the first JaCoCo release that reads Java 26 class files. -->
     <jacoco.version>0.8.15</jacoco.version>
   </properties>
@@ -204,6 +205,17 @@
         <groupId>org.apache.tomcat.embed</groupId>
         <artifactId>tomcat-embed-websocket</artifactId>
         <version>${tomcat.version}</version>
+      </dependency>
+
+      <!-- Guava, a transitive dependency (gRPC and other libraries) that comes
+           in as 32.1.2-jre and 33.6.0-android: HIGH CVE-2026-102554 (denial of
+           service through memory allocation without limits), fixed in 33.7.2.
+           Declared before the spring-boot-dependencies import so this entry
+           takes precedence. -->
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
       </dependency>
 
       <!-- Spring Boot (leaf adapters only — never domain/application/port) -->
